@@ -28,7 +28,9 @@
   <div class="top" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
     <div>
       <h2>GustaveBikeService</h2>
-      <div style="opacity:.7;">Bikes rented at least once (public view)</div>
+
+      <!-- ✅ HERE: user name + budget + account + currency -->
+      <div id="userInfo" style="opacity:.85; font-weight:500;"></div>
     </div>
 
     <div class="row" style="align-items:center;">
@@ -45,7 +47,9 @@
     </div>
   </div>
 
+  <!-- ✅ We'll keep this just for FX info (optional) -->
   <div id="rateHint" class="hint"></div>
+
   <div id="msg" class="empty" style="display:none;"></div>
 
   <table>
@@ -84,4 +88,3 @@
 <script src="public.js"></script>
 </body>
 </html>
-s

@@ -63,12 +63,39 @@ function convertEurTo(cur, eurValue) {
   return eurValue * rate;
 }
 
+/**
+ * ✅ Load budget from server and display it under title with user name
+ * Expects endpoint:
+ *   GET  /api/public/account?accountId=ACC_xxx
+ * returns JSON like:
+ *   { "balanceEur": 2500.0 }
+ */
+async function loadUserBudget() {
+  const userInfo = document.getElementById("userInfo");
+  if (!userInfo) return;
+
+  try {
+	const data = await apiJson(`${API_BASE}/public/auth/account?accountId=${encodeURIComponent(ACCOUNT_ID)}`);
+
+    const balanceEur = Number(data?.balanceEur ?? 0);
+
+    // Budget displayed in EUR (server truth)
+    userInfo.textContent =
+      `👤 ${USER_ID} — Budget: ${fmtMoney(balanceEur, "EUR")} | Account: ${ACCOUNT_ID} | Currency: ${currencySel.value}`;
+  } catch (e) {
+    userInfo.textContent =
+      `👤 ${USER_ID} | Account: ${ACCOUNT_ID} | Currency: ${currencySel.value} — Budget unavailable`;
+  }
+}
+
 function updateRateHint() {
   const cur = currencySel.value;
   const rate = FX_RATES[cur] ?? 1.0;
-  rateHint.textContent =
-    `Connected as "${USER_ID}" | account "${ACCOUNT_ID}" | currency "${cur}". ` +
-    (cur === "EUR" ? "" : `Offline FX: 1 EUR = ${rate} ${cur} (display only)`);
+
+  // Only FX hint here (optional)
+  rateHint.textContent = (cur === "EUR")
+    ? ""
+    : `Offline FX (display only): 1 EUR = ${rate} ${cur}`;
 }
 
 function render() {
@@ -198,8 +225,11 @@ window.purchase = async function () {
       })
     });
     alert(txt);
+
+    // Refresh page data + budget
     await loadBikes();
     await loadBasket();
+    await loadUserBudget(); // ✅ refresh budget after purchase
   } catch (e) {
     alert("Purchase failed: " + e.message);
   }
@@ -248,6 +278,7 @@ window.openReviews = async function (bikeId) {
 dlgClose?.addEventListener("click", () => dlg.close());
 
 reloadBtn.addEventListener("click", async () => {
+  await loadUserBudget();   // ✅ refresh budget too
   await loadBikes();
   await loadBasket();
   updateRateHint();
@@ -259,13 +290,16 @@ currencySel.addEventListener("change", async () => {
   localStorage.setItem("currency", currencySel.value);
   updateRateHint();
   render();
-  await loadBasket(); // refresh totals in new currency
+  await loadBasket();      // refresh totals in new currency
+  await loadUserBudget();  // ✅ update displayed currency label
 });
 
 (async function init() {
   const savedCur = localStorage.getItem("currency");
   if (savedCur) currencySel.value = savedCur;
+
   updateRateHint();
+  await loadUserBudget(); // ✅ show budget under title
   await loadBikes();
   await loadBasket();
 })();
