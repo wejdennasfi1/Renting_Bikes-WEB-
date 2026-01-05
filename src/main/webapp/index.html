@@ -1,3 +1,20 @@
+<script>
+    const role = localStorage.getItem("role");
+    if (role !== "insider") {
+        window.location.href = "login.html";
+    }
+</script>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+</script>
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

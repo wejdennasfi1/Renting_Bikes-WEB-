@@ -111,3 +111,13 @@ th { opacity: 0.8; font-weight: 600; }
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
 }
+
+
+
+.badge.sold{
+  border: 1px solid rgba(255,255,255,.3);
+  background: rgba(255,255,255,.08);
+  color: #e5e7eb;
+}
+
+

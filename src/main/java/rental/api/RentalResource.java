@@ -15,11 +15,6 @@ import rental.model.Rental;
 public class RentalResource {
 
     @GET
-    public List<Rental> listAll() {
-        return Db.listRentals();
-    }
-
-    @GET
     @Path("/user/{userId}")
     public List<Rental> listForUser(@PathParam("userId") int userId) {
         return Db.listRentalsForUser(userId);
@@ -27,13 +22,17 @@ public class RentalResource {
 
     @POST
     @Path("/rent")
+    @Produces(MediaType.TEXT_PLAIN)
     public String rent(RentRequest req) {
+        if (req == null) throw new BadRequestException("Missing body");
         return Db.rentBike(req.getBikeId(), req.getUserId());
     }
 
     @POST
     @Path("/return")
+    @Produces(MediaType.TEXT_PLAIN)
     public String giveBack(ReturnRequest req) {
+        if (req == null) throw new BadRequestException("Missing body");
         return Db.returnBike(req.getRentalId(), req.getCondition(), req.getNote());
     }
 }

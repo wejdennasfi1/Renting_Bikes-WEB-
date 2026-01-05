@@ -1,4 +1,5 @@
 const API_BASE = "api";
+console.log("🔥 app.js LOADED (SOLD + WAITING LIST FIX)");
 
 let users = [];
 let bikes = [];
@@ -26,6 +27,9 @@ const reloadNotifBtn = document.getElementById("reloadNotifBtn");
 const clearUiBtn = document.getElementById("clearUiBtn");
 const notifBox = document.getElementById("notifBox");
 
+// ========================
+// Helpers
+// ========================
 function getSelectedUserId() {
   return parseInt(userSelect.value, 10);
 }
@@ -46,11 +50,9 @@ function escapeHtml(s) {
 
 async function apiJson(url, options) {
   const res = await fetch(url, options);
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt || ("HTTP " + res.status));
-  }
-  return await res.json();
+  const txt = await res.text();
+  if (!res.ok) throw new Error(txt || ("HTTP " + res.status));
+  return txt ? JSON.parse(txt) : null;
 }
 
 async function apiText(url, options) {
@@ -60,11 +62,32 @@ async function apiText(url, options) {
   return txt;
 }
 
+// ========================
+// ✅ The ONLY correct state logic
+// sold=true ALWAYS wins
+// ========================
+function getState(b) {
+  if (b.sold === true) return "SOLD";
+  if (b.available === false) return "RENTED";
+  return "AVAILABLE";
+}
+
+function statusBadge(b) {
+  const st = getState(b);
+  if (st === "SOLD") return `<span class="badge sold">Sold</span>`;
+  if (st === "RENTED") return `<span class="badge bad">Rented</span>`;
+  return `<span class="badge ok">Available</span>`;
+}
+
+// ========================
+// Load
+// ========================
 async function loadUsers() {
   users = await apiJson(`${API_BASE}/users`);
-  userSelect.innerHTML = users.map(u => {
-    return `<option value="${u.id}">#${u.id} ${escapeHtml(u.name)} (${escapeHtml(u.type)})</option>`;
-  }).join("");
+
+  userSelect.innerHTML = (users || []).map(u =>
+    `<option value="${u.id}">#${u.id} ${escapeHtml(u.name)} (${escapeHtml(u.type)})</option>`
+  ).join("");
 
   await loadBikes();
   await loadRentals();
@@ -73,10 +96,14 @@ async function loadUsers() {
 
 async function loadBikes() {
   bikes = await apiJson(`${API_BASE}/bikes`);
+  bikes = bikes || [];
   renderOwnedBikes();
   renderBikes();
 }
 
+// ========================
+// Owned bikes (owner sees SOLD)
+// ========================
 function renderOwnedBikes() {
   const selectedUser = getSelectedUser();
   if (!selectedUser) {
@@ -92,13 +119,14 @@ function renderOwnedBikes() {
   }
 
   ownedBikesBox.innerHTML = owned.map(b => {
-    const status = b.available
-      ? `<span class="badge ok">Available</span>`
-      : `<span class="badge bad">Rented</span>`;
+    const state = getState(b);
+    const status = statusBadge(b);
 
-    const whoBtn = b.available
-      ? `<button class="btn" disabled title="Bike is available">Who rents?</button>`
-      : `<button class="btn" onclick="whoRentsMyBike(${b.id})">Who rents?</button>`;
+    // who rents? only for RENTED (not SOLD, not AVAILABLE)
+    const whoBtn =
+      state === "RENTED"
+        ? `<button class="btn" onclick="whoRentsMyBike(${b.id})">Who rents?</button>`
+        : `<button class="btn" disabled title="${state === "SOLD" ? "Bike is sold" : "Bike is available"}">Who rents?</button>`;
 
     return `
       <div class="rentalItem">
@@ -115,22 +143,38 @@ function renderOwnedBikes() {
   }).join("");
 }
 
+// ========================
+// Bikes (others)
+// ✅ IMPORTANT:
+// - hide SOLD bikes completely
+// - allow click on RENTED to join waiting list
+// ========================
 function renderBikes() {
-  const q = (bikeSearch.value || "").trim().toLowerCase();
+  const term = (bikeSearch.value || "").trim().toLowerCase();
   const selectedUser = getSelectedUser();
 
   const filtered = bikes
+    // not owned by selected user
     .filter(b => !selectedUser || b.owner !== selectedUser.name)
+    // hide sold bikes from others list
+    .filter(b => getState(b) !== "SOLD")
+    // search
     .filter(b => {
-      if (!q) return true;
-      return (b.title || "").toLowerCase().includes(q) || (b.owner || "").toLowerCase().includes(q);
+      if (!term) return true;
+      return (b.title || "").toLowerCase().includes(term) ||
+             (b.owner || "").toLowerCase().includes(term);
     });
 
   bikesBody.innerHTML = filtered.map(b => {
-    const status = b.available ? `<span class="badge ok">Available</span>` : `<span class="badge bad">Rented</span>`;
+    const state = getState(b);
+    const status = statusBadge(b);
+
+    // ✅ clickable even if RENTED (to join waiting list)
+    const rentLabel = (state === "AVAILABLE") ? "Rent" : "Join waiting";
+    const rentBtn = `<button class="btn" onclick="rentBike(${b.id})">${rentLabel}</button>`;
 
     const actions = `
-      <button class="btn" onclick="rentBike(${b.id})">Rent</button>
+      ${rentBtn}
       <button class="btn ghost" onclick="showWaiting(${b.id})">Waiting list</button>
     `;
 
@@ -147,9 +191,12 @@ function renderBikes() {
   }).join("");
 }
 
+// ========================
+// Waiting list / renter info
+// ========================
 async function showWaiting(bikeId) {
   const listIds = await apiJson(`${API_BASE}/bikes/${bikeId}/waiting`);
-  const names = listIds.map(id => {
+  const names = (listIds || []).map(id => {
     const u = users.find(x => x.id === id);
     return u ? u.name : ("#" + id);
   });
@@ -161,7 +208,19 @@ async function whoRentsMyBike(bikeId) {
   alert(txt);
 }
 
+// ========================
+// Rent (WAITING LIST works here)
+// ========================
 async function rentBike(bikeId) {
+  const b = bikes.find(x => x.id === bikeId);
+
+  // ✅ ONLY block sold
+  if (b && b.sold === true) {
+    alert("This bike is SOLD and cannot be rented.");
+    return;
+  }
+
+  // ✅ call API even if rented => server will reply WAITING_LIST
   const userId = getSelectedUserId();
   const body = { bikeId, userId };
 
@@ -174,7 +233,7 @@ async function rentBike(bikeId) {
   if (result.startsWith("RENT_OK:")) {
     alert("Rent OK. RentalId=" + result.split(":")[1]);
   } else if (result === "WAITING_LIST") {
-    alert("Bike not available. You were added to waiting list.");
+    alert("Bike not available. You were added to waiting list ✅");
   } else if (result === "CANNOT_RENT_OWN_BIKE") {
     alert("You cannot rent your own bike.");
   } else {
@@ -186,25 +245,26 @@ async function rentBike(bikeId) {
   await loadNotifications();
 }
 
+// ========================
+// Rentals
+// ========================
 async function loadRentals() {
   const userId = getSelectedUserId();
   const rentals = await apiJson(`${API_BASE}/rentals/user/${userId}`);
 
-  const active = rentals.filter(r => r.endTime == null);
+  const active = (rentals || []).filter(r => r.endTime == null);
 
   if (!active.length) {
     rentalsBox.innerHTML = `<div class="empty">No active rentals</div>`;
     return;
   }
 
-  rentalsBox.innerHTML = active.map(r => {
-    return `
-      <div class="rentalItem">
-        <div><b>Rental #${r.id}</b> | Bike #${r.bikeId} | started: ${escapeHtml(r.startTime)}</div>
-        <button class="btn" onclick="quickReturn(${r.id})">Return this</button>
-      </div>
-    `;
-  }).join("");
+  rentalsBox.innerHTML = active.map(r => `
+    <div class="rentalItem">
+      <div><b>Rental #${r.id}</b> | Bike #${r.bikeId} | started: ${escapeHtml(r.startTime)}</div>
+      <button class="btn" onclick="quickReturn(${r.id})">Return this</button>
+    </div>
+  `).join("");
 }
 
 async function quickReturn(rentalId) {
@@ -222,6 +282,12 @@ async function doReturn() {
     return;
   }
 
+  if (!returnNote.value || returnNote.value.trim() === "") {
+    returnMsg.textContent = "Review is required (write a note).";
+    returnMsg.className = "msg bad";
+    return;
+  }
+
   const body = {
     rentalId,
     condition: returnCondition.value,
@@ -234,6 +300,12 @@ async function doReturn() {
     body: JSON.stringify(body)
   });
 
+  if (result === "REVIEW_REQUIRED") {
+    returnMsg.textContent = "Review is required (write a note).";
+    returnMsg.className = "msg bad";
+    return;
+  }
+
   returnMsg.textContent = result;
   returnMsg.className = "msg ok";
 
@@ -242,31 +314,35 @@ async function doReturn() {
   await loadNotifications();
 }
 
+// ========================
+// Notifications
+// ========================
 async function loadNotifications() {
   const userId = getSelectedUserId();
   const list = await apiJson(`${API_BASE}/users/${userId}/notifications`);
 
-  if (!list.length) {
+  if (!list || !list.length) {
     notifBox.innerHTML = `<div class="empty">No notifications</div>`;
     return;
   }
 
-  notifBox.innerHTML = list.slice().reverse().map(n => `<div class="notifItem">${escapeHtml(n)}</div>`).join("");
+  notifBox.innerHTML = list.slice().reverse().map(n =>
+    `<div class="notifItem">${escapeHtml(n)}</div>`
+  ).join("");
 }
 
+// ========================
+// Remove / Add bike
+// ========================
 async function removeBike(bikeId) {
   const userId = getSelectedUserId();
-
-  const sure = confirm("Remove this bike?");
-  if (!sure) return;
+  if (!confirm("Remove this bike?")) return;
 
   const result = await apiText(`${API_BASE}/bikes/${bikeId}?userId=${userId}`, {
     method: "DELETE"
   });
 
-  if (result !== "REMOVE_OK") {
-    alert(result);
-  }
+  if (result !== "REMOVE_OK") alert(result);
 
   await loadBikes();
   await loadRentals();
@@ -291,6 +367,9 @@ async function addBike() {
   await loadNotifications();
 }
 
+// ========================
+// Events
+// ========================
 refreshUsersBtn.addEventListener("click", loadUsers);
 reloadBikesBtn.addEventListener("click", loadBikes);
 bikeSearch.addEventListener("input", renderBikes);
@@ -315,6 +394,5 @@ userSelect.addEventListener("change", async () => {
   await loadNotifications();
 });
 
-loadUsers().catch(err => {
-  alert("Error: " + err.message);
-});
+// Start
+loadUsers().catch(err => alert("Error: " + err.message));

@@ -7,6 +7,7 @@ import javax.ws.rs.core.MediaType;
 import rental.api.dto.AddBikeRequest;
 import rental.data.Db;
 import rental.model.Bike;
+import rental.model.Review;
 
 @Path("/bikes")
 @Produces(MediaType.APPLICATION_JSON)
@@ -18,23 +19,12 @@ public class BikeResource {
         return Db.listBikes();
     }
 
-    @GET
-    @Path("/{id}")
-    public Bike get(@PathParam("id") int id) {
-        Bike b = Db.getBike(id);
-        if (b == null) throw new NotFoundException("Bike not found");
-        return b;
-    }
-
     @POST
     public Bike add(AddBikeRequest req) {
         if (req == null) throw new BadRequestException("Missing body");
-        if (req.getUserId() <= 0) throw new BadRequestException("userId required");
-        if (req.getTitle() == null || req.getTitle().trim().isEmpty()) throw new BadRequestException("title required");
-
-        Bike created = Db.addBike(req.getUserId(), req.getTitle().trim(), req.getPriceEur());
-        if (created == null) throw new BadRequestException("Cannot create bike");
-        return created;
+        Bike b = Db.addBike(req.getUserId(), req.getTitle(), req.getPriceEur());
+        if (b == null) throw new BadRequestException("Add bike failed");
+        return b;
     }
 
     @DELETE
@@ -42,6 +32,14 @@ public class BikeResource {
     @Produces(MediaType.TEXT_PLAIN)
     public String remove(@PathParam("id") int id, @QueryParam("userId") int userId) {
         return Db.removeBike(id, userId);
+    }
+
+    @GET
+    @Path("/{id}")
+    public Bike get(@PathParam("id") int id) {
+        Bike b = Db.getBike(id);
+        if (b == null) throw new NotFoundException("Bike not found");
+        return b;
     }
 
     @GET
@@ -56,4 +54,11 @@ public class BikeResource {
     public String renter(@PathParam("id") int id) {
         return Db.renterInfo(id);
     }
+
+    @GET
+    @Path("/{id}/reviews")
+    public List<Review> reviews(@PathParam("id") int id) {
+        return Db.getReviewsForBike(id);
+    }
+    
 }

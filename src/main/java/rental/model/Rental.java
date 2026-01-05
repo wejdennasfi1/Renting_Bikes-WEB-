@@ -1,4 +1,5 @@
 package rental.model;
+import rental.model.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
