@@ -1,0 +1,110 @@
+<script>
+    const role = localStorage.getItem("role");
+    if (role !== "insider") {
+        window.location.href = "login.html";
+    }
+</script>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+</script>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Eiffel Bike Rental</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Eiffel Bike Rental</h1>
+      <p>Rent, return, waiting list, notifications</p>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>1) Choose user</h2>
+        <div class="row">
+          <select id="userSelect"></select>
+          <button id="refreshUsersBtn">Refresh</button>
+        </div>
+
+        <!-- Add button moved here -->
+        <div class="row" style="margin-top:10px;">
+          <button id="addBikeBtn">Add bike</button>
+        </div>
+
+        <h3>Owned bikes</h3>
+        <div id="ownedBikesBox" class="box"></div>
+
+        <div class="hint">
+          Tip: choose a user, then rent a bike, then return it to trigger waiting list notifications.
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2) Bikes (others)</h2>
+        <div class="row">
+          <input id="bikeSearch" placeholder="Search bike title or owner"/>
+          <button id="reloadBikesBtn">Reload bikes</button>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Bike</th>
+                <th>Owner</th>
+                <th>Status</th>
+                <th>RentedCount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bikesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>3) My active rentals</h2>
+        <button id="reloadRentalsBtn">Reload my rentals</button>
+        <div id="rentalsBox" class="box"></div>
+
+        <h3>Return a bike</h3>
+        <div class="row">
+          <input id="returnRentalId" placeholder="Rental ID (example: 1)"/>
+          <select id="returnCondition">
+            <option>Good</option>
+            <option>Medium</option>
+            <option>Bad</option>
+          </select>
+          <input id="returnNote" placeholder="Note (optional)"/>
+          <button id="returnBtn">Return</button>
+        </div>
+        <div id="returnMsg" class="msg"></div>
+      </section>
+
+      <section class="card">
+        <h2>4) Notifications</h2>
+        <div class="row">
+          <button id="reloadNotifBtn">Reload notifications</button>
+          <button id="clearUiBtn">Clear UI</button>
+        </div>
+        <div id="notifBox" class="box"></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

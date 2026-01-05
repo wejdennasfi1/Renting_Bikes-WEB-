@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login – GustaveBike</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --bg:#f4f6f8;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --btn:#111827;
+      --btnText:#fff;
+      --shadow: 0 12px 30px rgba(0,0,0,.12);
+      --radius: 14px;
+      --accent:#2563eb;
+    }
+
+    body{
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0;
+      padding:16px;
+      color:var(--text);
+    }
+
+    .login-box{
+      width:460px;
+      max-width:100%;
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+      padding:22px;
+    }
+
+    h2{ margin:0 0 14px; }
+
+    .role-group{
+      display:flex;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    /* Hide native radio (we use custom dot) */
+    .role-card input[type="radio"]{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+      width:0;
+      height:0;
+    }
+
+    .role-card{
+      position:relative;
+      flex:1;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px;
+      display:flex;
+      gap:12px;
+      cursor:pointer;
+      transition:.15s;
+      background:#fff;
+      align-items:flex-start;
+    }
+    .role-card:hover{ transform:translateY(-1px); }
+
+    /* Custom small circle */
+    .dot{
+      width:22px;
+      height:22px;
+      border-radius:999px;
+      border:2px solid #9ca3af;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+      margin-top:2px;
+      background:#fff;
+    }
+    .dot::after{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:transparent;
+      transform:scale(.9);
+      transition:.15s;
+    }
+
+    /* Selected style */
+    .role-card.selected{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+    }
+    .role-card.selected .dot{
+      border-color: var(--accent);
+    }
+    .role-card.selected .dot::after{
+      background: var(--accent);
+    }
+
+    .role-title{ font-weight:700; }
+    .role-sub{ font-size:13px; color:var(--muted); line-height:1.25; margin-top:2px; }
+
+    .row{ margin-top:12px; }
+    label{ font-size:13px; color:var(--muted); display:block; margin-bottom:6px; }
+
+    input, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-size:14px;
+      box-sizing:border-box;
+      outline:none;
+      background:#fff;
+    }
+    input:focus, select:focus{ border-color:#9ca3af; }
+
+    .muted{ font-size:13px; color:var(--muted); margin-top:6px; }
+
+    .outsiderBox{
+      display:none;
+      margin-top:12px;
+      border:1px dashed var(--border);
+      border-radius:12px;
+      padding:12px;
+      background:#fafafa;
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    button{
+      flex:1;
+      padding:12px;
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+    }
+
+    .primary{ background:var(--btn); color:var(--btnText); }
+    .ghost{ background:#fff; border:1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+<div class="login-box">
+  <h2>GustaveBike Login</h2>
+
+  <!-- ROLE SELECTION -->
+  <div class="role-group">
+    <div class="role-card" id="card-insider" onclick="setRole('insider')">
+      <span class="dot" aria-hidden="true"></span>
+      <input type="radio" name="role" value="insider" checked />
+      <div>
+        <div class="role-title">Insider</div>
+        <div class="role-sub">Student / Employee (rent, return, reviews)</div>
+      </div>
+    </div>
+
+    <div class="role-card" id="card-outsider" onclick="setRole('outsider')">
+      <span class="dot" aria-hidden="true"></span>
+      <input type="radio" name="role" value="outsider" />
+      <div>
+        <div class="role-title">Outsider</div>
+        <div class="role-sub">Public buyer (basket & purchase)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTSIDER FORM -->
+  <div id="outsiderBox" class="outsiderBox">
+    <div class="row">
+      <label for="clientId">Client ID</label>
+      <input id="clientId" placeholder="example: wejden" />
+    </div>
+
+    <div class="row">
+      <label for="accountId">Bank Account</label>
+      <input id="accountId" placeholder="example: ACC_wejden" />
+    </div>
+
+    <div class="row">
+      <label for="budgetEur">Initial Budget (EUR)</label>
+      <input id="budgetEur" type="number" step="0.01" placeholder="example: 300" />
+      <div class="muted">Stored server-side in the Bank service (mock).</div>
+    </div>
+
+    <div class="row">
+      <label for="currency">Currency</label>
+      <select id="currency">
+        <option value="EUR">EUR</option>
+        <option value="USD">USD</option>
+        <option value="GBP">GBP</option>
+        <option value="TND">TND</option>
+        <option value="MAD">MAD</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="ghost" onclick="resetStorage()">Reset</button>
+    <button class="primary" onclick="login()">Enter</button>
+  </div>
+</div>
+
+<script>
+  function applyRoleUi(role){
+    const insiderCard = document.getElementById("card-insider");
+    const outsiderCard = document.getElementById("card-outsider");
+    insiderCard.classList.toggle("selected", role === "insider");
+    outsiderCard.classList.toggle("selected", role === "outsider");
+
+    document.getElementById("outsiderBox").style.display =
+      (role === "outsider") ? "block" : "none";
+  }
+
+  function setRole(role){
+    document.querySelector(`input[name="role"][value="${role}"]`).checked = true;
+    applyRoleUi(role);
+  }
+
+  function resetStorage(){
+    localStorage.clear();
+    alert("LocalStorage cleared");
+    setRole("insider");
+  }
+
+  async function login(){
+    const role = document.querySelector('input[name="role"]:checked').value;
+    localStorage.setItem("role", role);
+
+    if(role === "insider"){
+      window.location.href = "index.html";
+      return;
+    }
+
+    let clientId = document.getElementById("clientId").value.trim() || "client1";
+    let accountId = document.getElementById("accountId").value.trim() || ("ACC_" + clientId);
+    let currency = document.getElementById("currency").value || "EUR";
+    let budget = parseFloat(document.getElementById("budgetEur").value);
+    if (!Number.isFinite(budget)) budget = 200;
+
+    // store client info locally (UI)
+    localStorage.setItem("clientId", clientId);
+    localStorage.setItem("accountId", accountId);
+    localStorage.setItem("currency", currency);
+
+    // send budget to server (Bank mock)
+    try{
+      await fetch("api/public/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: clientId,
+          accountId: accountId,
+          initialBudgetEur: budget
+        })
+      });
+    } catch(e){
+      // keep UI working even if server is unreachable
+      console.warn("Bank login endpoint failed:", e);
+    }
+
+    window.location.href = "public.html";
+  }
+
+  // restore role on reload
+  setRole(localStorage.getItem("role") || "insider");
+</script>
+
+</body>
+</html>

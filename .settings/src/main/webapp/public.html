@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>GustaveBikeService</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<script>
+  // guard: outsider must be connected
+  const role = localStorage.getItem("role");
+  const clientId = localStorage.getItem("clientId");
+  if (role !== "outsider" || !clientId) {
+    window.location.href = "login.html";
+  }
+
+  function logout() {
+    localStorage.removeItem("role");
+    localStorage.removeItem("clientId");
+    localStorage.removeItem("accountId");
+    // localStorage.removeItem("currency"); // optional
+    window.location.href = "login.html";
+  }
+</script>
+
+<div class="wrap">
+  <div class="top" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <h2>GustaveBikeService</h2>
+      <div style="opacity:.7;">Bikes rented at least once (public view)</div>
+    </div>
+
+    <div class="row" style="align-items:center;">
+      <input id="q" placeholder="Search by title or owner..." />
+      <select id="currency">
+        <option value="EUR">EUR (€)</option>
+        <option value="USD">USD ($)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="TND">TND (DT)</option>
+        <option value="MAD">MAD (DH)</option>
+      </select>
+      <button id="reload" class="ghost">Reload</button>
+      <button class="ghost" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="rateHint" class="hint"></div>
+  <div id="msg" class="empty" style="display:none;"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Bike</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Rented</th>
+        <th>Price</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <h3 style="margin-top:30px;">🧺 Basket</h3>
+  <div id="basketBox" class="empty">Basket is empty.</div>
+  <button class="primary" onclick="purchase()">Purchase</button>
+</div>
+
+<!-- ✅ REQUIRED for Reviews to work -->
+<dialog id="reviewsDlg">
+  <div class="dlgHead" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <div>
+      <div id="dlgTitle" style="font-weight:700;">Reviews</div>
+      <div id="dlgSub" class="meta" style="opacity:.7;"></div>
+    </div>
+    <button id="dlgClose" class="ghost">Close</button>
+  </div>
+
+  <div id="dlgBody" class="dlgBody" style="margin-top:12px;"></div>
+</dialog>
+
+<script src="public.js"></script>
+</body>
+</html>
+s
